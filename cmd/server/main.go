@@ -9,9 +9,15 @@ import (
 
 	"github.com/irgiaryanda/event-driven-crm-orchestrator/internal/db"
 	"github.com/irgiaryanda/event-driven-crm-orchestrator/internal/handlers"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found, using environment variables")
+	}
+
 	// Initialize database
 	dbPath := "crm_orchestrator.db"
 	if err := db.Initialize(dbPath); err != nil {

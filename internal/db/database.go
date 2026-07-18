@@ -63,3 +63,9 @@ func InsertEvent(event *models.Event) (bool, error) {
 
 	return true, nil
 }
+
+// UpdateEventStatus updates the status of an existing event
+func UpdateEventStatus(id string, status string) error {
+	_, err := DB.Exec("UPDATE events SET status = ? WHERE id = ?", status, id)
+	return err
+}
