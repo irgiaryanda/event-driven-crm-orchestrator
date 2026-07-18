@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -13,10 +14,9 @@ import (
 	"github.com/irgiaryanda/event-driven-crm-orchestrator/internal/services"
 )
 
-// WebhookPayload represents the incoming webhook payload
+// WebhookPayload represents the incoming webhook payload for extracting event_id
 type WebhookPayload struct {
-	EventID string          `json:"event_id"`
-	Data    json.RawMessage `json:"data"`
+	EventID string `json:"event_id"`
 }
 
 // HandleWebhook processes incoming webhook events
@@ -26,10 +26,18 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload WebhookPayload
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
+	// Read raw body for storage
+	rawBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
+	}
+
+	// Extract event_id if present
+	var payload WebhookPayload
+	if err := json.Unmarshal(rawBody, &payload); err != nil {
+		// Non-fatal: continue without event_id
+		payload.EventID = ""
 	}
 
 	// Generate new UUID if event_id is not provided
@@ -38,12 +46,9 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		eventID = uuid.New().String()
 	}
 
-	// Marshal the data back to string for storage
-	payloadBytes, _ := json.Marshal(payload.Data)
-
 	event := &models.Event{
 		ID:        eventID,
-		Payload:   string(payloadBytes),
+		Payload:   string(rawBody),
 		Status:    "PENDING",
 		CreatedAt: time.Now(),
 	}
@@ -69,7 +74,7 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Process asynchronously
-	go processEvent(eventID, string(payloadBytes))
+	go processEvent(eventID, string(rawBody))
 }
 
 func processEvent(eventID string, payload string) {
