@@ -44,7 +44,7 @@ func CategorizePayload(payload string) (string, error) {
 		return "", fmt.Errorf("LLM_API_URL or LLM_API_KEY not configured")
 	}
 
-	systemPrompt := "You are a CRM router. Categorize the following JSON payload into one of these categories: SUPPORT, SALES, BILLING, or OTHER. Reply strictly with the category name only."
+	systemPrompt := "You are an intelligent CRM router. Categorize the following JSON payload into one of these exact categories: SUPPORT, SALES, BILLING, or OTHER. The payload may be written in English, Indonesian, or any other language. Understand the context regardless of the language and reply strictly with the category name only (e.g., SUPPORT). Do not include any other words."
 
 	requestBody := LLMRequest{
 		Model: model,
