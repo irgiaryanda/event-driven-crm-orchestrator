@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/irgiaryanda/event-driven-crm-orchestrator/internal/models"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 var DB *sql.DB
@@ -13,7 +13,7 @@ var DB *sql.DB
 // Initialize sets up the database connection and creates tables
 func Initialize(dbPath string) error {
 	var err error
-	DB, err = sql.Open("sqlite3", dbPath)
+	DB, err = sql.Open("sqlite", dbPath)
 	if err != nil {
 		return err
 	}
