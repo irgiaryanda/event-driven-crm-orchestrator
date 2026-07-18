@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 )
@@ -34,6 +35,10 @@ type LLMChoice struct {
 func CategorizePayload(payload string) (string, error) {
 	apiURL := os.Getenv("LLM_API_URL")
 	apiKey := os.Getenv("LLM_API_KEY")
+	model := os.Getenv("LLM_MODEL")
+	if model == "" {
+		model = "gpt-4o"
+	}
 
 	if apiURL == "" || apiKey == "" {
 		return "", fmt.Errorf("LLM_API_URL or LLM_API_KEY not configured")
@@ -42,7 +47,7 @@ func CategorizePayload(payload string) (string, error) {
 	systemPrompt := "You are a CRM router. Categorize the following JSON payload into one of these categories: SUPPORT, SALES, BILLING, or OTHER. Reply strictly with the category name only."
 
 	requestBody := LLMRequest{
-		Model: "gpt-3.5-turbo",
+		Model: model,
 		Messages: []LLMMessage{
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: payload},
@@ -70,7 +75,8 @@ func CategorizePayload(payload string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("LLM API returned status: %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("LLM API returned status: %d, body: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var llmResp LLMResponse
