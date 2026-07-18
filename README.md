@@ -59,6 +59,18 @@ An AI-powered, event-driven webhook routing system built entirely in Go. This or
 
 ---
 
+## 🧠 AI-Assisted Development (SDLC)
+
+This project was strategically architected to demonstrate modern development workflows using AI coding assistants. While the system architecture, event-driven design, and security constraints were planned by a human engineer, the rapid implementation and scaffolding were executed in collaboration with autonomous AI agents (Claude/Cline).
+
+**Key SDLC Highlights:**
+
+- **Prompt-Driven Implementation:** Directed AI on multi-step implementation tasks (e.g., CGO-free SQLite integration, asynchronous goroutines).
+- **Strict Code Review:** All AI-generated output was manually reviewed before shipping to ensure correctness, type safety, and security (avoiding hardcoded credentials and mitigating prompt injection risks).
+- **Rapid Prototyping:** Drastically reduced boilerplate coding time, allocating more focus to system design, observability, and judgment.
+
+---
+
 ## Getting Started
 
 ### Prerequisites
