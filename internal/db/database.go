@@ -69,3 +69,23 @@ func UpdateEventStatus(id string, status string) error {
 	_, err := DB.Exec("UPDATE events SET status = ? WHERE id = ?", status, id)
 	return err
 }
+
+// GetAllEvents retrieves all events ordered by created_at DESC
+func GetAllEvents() ([]models.Event, error) {
+	rows, err := DB.Query("SELECT id, payload, status, created_at FROM events ORDER BY created_at DESC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []models.Event
+	for rows.Next() {
+		var event models.Event
+		if err := rows.Scan(&event.ID, &event.Payload, &event.Status, &event.CreatedAt); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
+}

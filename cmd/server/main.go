@@ -12,6 +12,20 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		next(w, r)
+	}
+}
+
 func main() {
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
@@ -26,7 +40,9 @@ func main() {
 	log.Println("Database initialized successfully")
 
 	// Setup HTTP routes
-	http.HandleFunc("/api/webhook", handlers.HandleWebhook)
+	http.Handle("/", http.FileServer(http.Dir("./static")))
+	http.HandleFunc("/api/webhook", corsMiddleware(handlers.HandleWebhook))
+	http.HandleFunc("/api/events", corsMiddleware(handlers.GetEvents))
 
 	// Start server
 	server := &http.Server{

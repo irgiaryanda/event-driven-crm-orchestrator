@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event-Driven CRM Orchestrator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .json-display {
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                Event-Driven CRM Orchestrator
+            </h1>
+            <p class="text-gray-400 mt-2">Real-time webhook event monitoring dashboard</p>
+        </header>
+
+        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-white">Events</h2>
+                <button onclick="loadEvents()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Payload</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-table-body" class="divide-y divide-gray-700">
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                Loading events...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-6 text-center text-gray-500 text-sm">
+            <p>Webhook endpoint: <code class="bg-gray-800 px-2 py-1 rounded">POST /api/webhook</code></p>
+        </div>
+    </div>
+
+    <script>
+        function getStatusBadge(status) {
+            const statusClasses = {
+                'PROCESSED': 'bg-green-500/20 text-green-400 border-green-500/30',
+                'PENDING': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+                'FAILED': 'bg-red-500/20 text-red-400 border-red-500/30'
+            };
+            const defaultClass = 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+            const className = statusClasses[status] || defaultClass;
+            return `<span class="px-3 py-1 rounded-full text-xs font-medium border ${className}">${status}</span>`;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        async function loadEvents() {
+            const tbody = document.getElementById('events-table-body');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                        Loading...
+                    </td>
+                </tr>
+            `;
+
+            try {
+                const response = await fetch('/api/events');
+                const events = await response.json();
+
+                if (events.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                No events found. Send a webhook to get started.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = events.map(event => `
+                    <tr class="hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-mono text-blue-400">${event.id}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="json-display text-sm text-gray-300" title="${event.payload}">
+                                ${event.payload}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${getStatusBadge(event.status)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            ${formatDate(event.created_at)}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-red-400">
+                            Failed to load events: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        loadEvents();
+    </script>
+</body>
+</html>
