@@ -34,3 +34,6 @@ go.work
 Thumbs.db
 
 .clinerules
+
+# Environment files
+.env
